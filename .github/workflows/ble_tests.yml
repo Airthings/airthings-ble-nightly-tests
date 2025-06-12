@@ -39,4 +39,4 @@ jobs:
 
       - name: Run BLE tests
         run: |
-          pytest tests/ble/
+          poetry run pytest tests/ble/

@@ -16,11 +16,25 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
       
+      - name: Make sure dependencies are installed
+        run: |
+          if ! command -v python3.13 &> /dev/null; then
+            echo "Python 3.13 is not installed. Please install it."
+            exit 1
+          fi
+          if ! command -v uv &> /dev/null; then
+            echo "uv is not installed. Please install it."
+            exit 1
+          fi
+
+      - name: Make sure uv is installed
+        run: |
+
       - name: Setup Python Virtual Environment
         run: |
-          python -m venv .venv
+          uv venv .venv
           source .venv/bin/activate
-          uv pip install -e .
+          uv uv pip install -e .
 
       - name: Run BLE tests
         run: |

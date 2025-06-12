@@ -42,3 +42,6 @@ pip-delete-this-directory.txt
 
 # Tests
 .coverage
+
+# macOS
+.DS_Store

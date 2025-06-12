@@ -1,0 +1,27 @@
+name: Test BLE functionality
+
+on:
+  push:
+    branches:
+      - test/run-ble-tests
+
+jobs:
+  test-ble:
+    name: Test BLE functionality
+    runs-on: [ self-hosted, macOS, ARM64 ]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Setup Python Virtual Environment
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          uv pip install -e .
+
+      - name: Run BLE tests
+        run: |
+          pytest tests/ble/

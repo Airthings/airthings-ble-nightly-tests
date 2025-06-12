@@ -34,7 +34,7 @@ jobs:
         run: |
           uv venv .venv
           source .venv/bin/activate
-          uv uv pip install -e .
+          poetry install
 
       - name: Run BLE tests
         run: |

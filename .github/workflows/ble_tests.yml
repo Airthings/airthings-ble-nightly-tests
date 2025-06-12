@@ -26,9 +26,10 @@ jobs:
             echo "uv is not installed. Please install it."
             exit 1
           fi
-
-      - name: Make sure uv is installed
-        run: |
+          if ! command -v poetry &> /dev/null; then
+            echo "Poetry is not installed. Please install it."
+            exit 1
+          fi
 
       - name: Setup Python Virtual Environment
         run: |

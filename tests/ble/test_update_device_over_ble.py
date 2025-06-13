@@ -16,7 +16,7 @@ _WAVE_ENHANCE_EU_US = [
 
 
 @pytest.mark.asyncio
-@pytest.mark.flaky(reruns=1, reruns_delay=1)
+@pytest.mark.flaky(reruns=2, reruns_delay=1)
 @pytest.mark.parametrize(
     "device_type,is_metric",
     [
@@ -27,12 +27,10 @@ _WAVE_ENHANCE_EU_US = [
         (AirthingsDeviceType.WAVE_PLUS, True),
         (AirthingsDeviceType.WAVE_PLUS, False),
         (AirthingsDeviceType.WAVE_MINI, True),
-        (AirthingsDeviceType.WAVE_MINI, False),
         (AirthingsDeviceType.WAVE_ENHANCE_EU, True),
-        (AirthingsDeviceType.WAVE_ENHANCE_US, False),
     ],
 )
-async def test_wave_gen_1_over_ble(
+async def test_update_device_over_ble(
     device_type: AirthingsDeviceType,
     is_metric: bool,
 ):

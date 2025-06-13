@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from bleak import BleakScanner, BLEDevice
 from bleak.backends.scanner import AdvertisementData
 
@@ -10,6 +11,8 @@ from tests.ble.const import (
     WAVE_MINI,
     WAVE_ENHANCE,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class AirthingsScanner:
@@ -28,30 +31,36 @@ class AirthingsScanner:
         # Double check manufacturer id (820)
         if advertisement_data.manufacturer_data.get(820) is None:
             return False
+
         uuids = advertisement_data.service_uuids
-        if self.device_type == AirthingsDeviceType.WAVE_GEN_1:
+
+        if AirthingsDeviceType.WAVE_GEN_1 == self.device_type:
             return "b42e1f6e-ade7-11e4-89d3-123b93f75cba" in uuids
-        if self.device_type == AirthingsDeviceType.WAVE_RADON:
+
+        if AirthingsDeviceType.WAVE_RADON == self.device_type:
             return "b42e4a8e-ade7-11e4-89d3-123b93f75cba" in uuids
-        if self.device_type == AirthingsDeviceType.WAVE_PLUS:
+
+        if AirthingsDeviceType.WAVE_PLUS == self.device_type:
             return "b42e1c08-ade7-11e4-89d3-123b93f75cba" in uuids
-        if self.device_type == AirthingsDeviceType.WAVE_MINI:
+
+        if AirthingsDeviceType.WAVE_MINI == self.device_type:
             return "b42e3882-ade7-11e4-89d3-123b93f75cba" in uuids
+
         if (
-            self.device_type == AirthingsDeviceType.WAVE_ENHANCE_EU
-            or self.device_type == AirthingsDeviceType.WAVE_ENHANCE_US
+            AirthingsDeviceType.WAVE_ENHANCE_EU == self.device_type
+            or AirthingsDeviceType.WAVE_ENHANCE_US == self.device_type
         ):
             return (
-                "b42eb4a6-ade7-11e4-89d3-123b93f75cba" in uuids
-                # and "Tern" in device.name
+                (name := device.name) and "Tern" in name
+                and "b42e90a2-ade7-11e4-89d3-123b93f75cba" in uuids
             )
         return False
 
-    async def find_device_by_type(self) -> BLEDevice | None:
+    async def find_device_by_type(self, timeout: int = 10) -> BLEDevice | None:
         """Find a device of a specific type in a list of devices."""
         return await BleakScanner.find_device_by_filter(
             self._device_filter,
-            timeout=10
+            timeout=timeout
         )
 
 
@@ -70,18 +79,26 @@ def sensors_types_from_device_type(device_type: AirthingsDeviceType) -> list[str
         or device_type == AirthingsDeviceType.WAVE_ENHANCE_US
     ):
         return WAVE_ENHANCE
+    
+    _LOGGER.info(
+        f"Device type {device_type} not recognized, returning empty sensor list."
+    )
     return 0
 
 
 async def _main():
     """Main function for testing purposes."""
-    scanner = AirthingsScanner(AirthingsDeviceType.WAVE_GEN_1)
-    device = await scanner.find_device_by_type()
+    scanner = AirthingsScanner(AirthingsDeviceType.WAVE_ENHANCE_US)
+    _LOGGER.info("Starting BLE scan for Airthings devices...")
+    device = await scanner.find_device_by_type(
+        timeout=20
+    )
     if device:
-        print(f"Found device: {device}")
+        _LOGGER.info(f"Found device: {device}")
     else:
-        print("No device found.")
+        _LOGGER.error("No device found.")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     asyncio.run(_main())

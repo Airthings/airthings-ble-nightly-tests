@@ -7,10 +7,10 @@ class SensorTypes(StrEnum):
     HUMIDITY = "humidity"
     ILLUMINANCE = "illuminance"
     LUX = "lux"
+    NOISE = "noise"
     PRESSURE = "pressure"
     RADON_1DAY_AVG = "radon_1day_avg"
     RADON_LONGTERM_AVG = "radon_longterm_avg"
-    SLA = "sla"
     TEMPERATURE = "temperature"
     VOC = "voc"
 
@@ -49,7 +49,7 @@ WAVE_ENHANCE: list[SensorTypes] = [
     SensorTypes.BATTERY,
     SensorTypes.CO2,
     SensorTypes.LUX,
+    SensorTypes.NOISE,
     SensorTypes.PRESSURE,
-    SensorTypes.SLA,
     SensorTypes.VOC,
 ]

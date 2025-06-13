@@ -3,36 +3,80 @@ import pytest
 
 from airthings_ble.device_type import AirthingsDeviceType
 from airthings_ble.parser import AirthingsBluetoothDeviceData
-from tests.ble.helpers import find_device_by_type
+from tests.ble.helpers import (
+    AirthingsScanner,
+    sensors_types_from_device_type,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-airthings = AirthingsBluetoothDeviceData(
-    logger=_LOGGER,
-    is_metric=True,
-    max_attempts=1,
-)
-
-
-# Before all tests
-def setup_module(module):
-    """Setup module for tests."""
-    return
-
 
 @pytest.mark.asyncio
-async def test_wave_gen_1_over_ble():
+@pytest.mark.flaky(reruns=3, reruns_delay=1)
+@pytest.mark.parametrize(
+    "device_type,is_metric",
+    [
+        (AirthingsDeviceType.WAVE_GEN_1, True),
+        (AirthingsDeviceType.WAVE_GEN_1, False),
+        (AirthingsDeviceType.WAVE_RADON, True),
+        (AirthingsDeviceType.WAVE_RADON, False),
+        (AirthingsDeviceType.WAVE_PLUS, True),
+        (AirthingsDeviceType.WAVE_PLUS, False),
+        (AirthingsDeviceType.WAVE_MINI, True),
+        (AirthingsDeviceType.WAVE_MINI, False),
+        (AirthingsDeviceType.WAVE_ENHANCE_EU, True),
+        (AirthingsDeviceType.WAVE_ENHANCE_EU, False),
+        (AirthingsDeviceType.WAVE_ENHANCE_US, True),
+        (AirthingsDeviceType.WAVE_ENHANCE_US, False),
+    ],
+)
+async def test_wave_gen_1_over_ble(
+    device_type: AirthingsDeviceType,
+    is_metric: bool,
+):
     """Test Wave Gen 1 over BLE."""
-    # ble_device = await find_device(mac_address="00:11:22:33:44:55")
-    ble_device = await find_device_by_type(
-        device_type=AirthingsDeviceType.WAVE_GEN_1
+    scanner = AirthingsScanner(device_type=device_type)
+
+    ble_device = await scanner.find_device_by_type()
+
+    airthings = AirthingsBluetoothDeviceData(
+        logger=_LOGGER,
+        is_metric=is_metric,
     )
 
-    assert ble_device is not None, "Device not found"
-
-    # Check for exceptions during device update
     try:
         device = await airthings.update_device(ble_device=ble_device)
-        assert device is not None, "Device updated"
     except Exception as e:
         pytest.fail(f"Exception occurred while updating device: {e}")
+
+    assert device.model == device_type, (
+        f"Device type mismatch, expected: {device_type}, got: {device.model}"
+    )
+    assert device.sensors, "No sensors found in device"
+
+    expected_sensors = sensors_types_from_device_type(device_type)
+    assert len(device.sensors) >= len(expected_sensors), (
+        f"Found {len(device.sensors)} sensors, expected at least "
+        f"{', '.join(expected_sensors)} sensors"
+    )
+
+    # flat = device.sensors.keys()
+
+    # Ensure all expected sensors are present in the device
+    def flatten_sensors(sensors):
+        """Recursively flatten a list of sensors."""
+        for sensor in sensors:
+            if isinstance(sensor, list):
+                yield from flatten_sensors(sensor)
+            else:
+                yield sensor
+
+    flat_expected_sensors = list(flatten_sensors(expected_sensors))
+
+    missing_sensors = [sensor for sensor in flat_expected_sensors if sensor not in device.sensors]
+    if missing_sensors:
+        pytest.fail(f"Missing sensors in device: {', '.join(str(s) for s in missing_sensors)}")
+
+    # Optionally, log found sensors for debugging
+    for sensor in flat_expected_sensors:
+        _LOGGER.debug(f"Verified sensor present: {sensor}")

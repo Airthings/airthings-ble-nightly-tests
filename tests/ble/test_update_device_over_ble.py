@@ -16,7 +16,7 @@ _WAVE_ENHANCE_EU_US = [
 
 
 @pytest.mark.asyncio
-@pytest.mark.flaky(reruns=2, reruns_delay=1)
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 @pytest.mark.parametrize(
     "device_type,is_metric",
     [
